@@ -5,7 +5,7 @@ face_app = None
 def init_face_app():
     global face_app
     if face_app is None:
-        app = FaceAnalysis(name="buffalo_s",root="/opt/render/project/src/app/core/buffalo_s")
+        app = FaceAnalysis(name="buffalo_s")
         app.prepare(ctx_id=-1, det_size=(640, 640))
         face_app = app
     return face_app
