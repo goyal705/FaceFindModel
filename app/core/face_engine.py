@@ -5,8 +5,8 @@ face_app = None
 def init_face_app():
     global face_app
     if face_app is None:
-        app = FaceAnalysis(name="buffalo_s")
-        app.prepare(ctx_id=-1, det_size=(640, 640))
+        app = FaceAnalysis(name="buffalo_l",allowed_modules=["detection", "recognition"])
+        app.prepare(ctx_id=-1, det_thresh=0.5, det_size=(640, 640))
         face_app = app
     return face_app
 
