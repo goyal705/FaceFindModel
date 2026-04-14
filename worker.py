@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timezone
-from sqlalchemy import text
+from sqlalchemy import text,bindparam
+from sqlalchemy.dialects.postgresql import JSONB
 
 from db import AsyncSessionLocal
 from face_utils import fetch_image_bytes, extract_face_descriptors
@@ -14,7 +15,7 @@ async def process_one_photo():
         result = await db.execute(text("""
             SELECT id, url
             FROM photos
-            WHERE indexing_status = 'pending'
+            WHERE indexing_status in ('pending','failed')
             ORDER BY id ASC
             LIMIT 1
             FOR UPDATE SKIP LOCKED
@@ -43,7 +44,6 @@ async def process_one_photo():
         try:
             # 🔹 fetch + process
             image_bytes = await fetch_image_bytes(photo["url"])
-            print("success")
             descriptors = extract_face_descriptors(image_bytes)
 
             # 🔹 success update
@@ -55,12 +55,15 @@ async def process_one_photo():
                     indexed_at = :indexed_at,
                     indexing_error = NULL
                 WHERE id = :id
-            """), {
+            """).bindparams(
+                            bindparam("descriptors", type_=JSONB)
+                        ), {
                 "id": photo_id,
                 "descriptors": descriptors,
                 "faces_count": len(descriptors),
                 "indexed_at": datetime.now(timezone.utc)
             })
+            print("No of faces indexed for photo_id", photo_id, ":", len(descriptors))
 
             await db.commit()
 
